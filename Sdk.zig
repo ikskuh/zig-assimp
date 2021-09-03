@@ -195,6 +195,7 @@ pub const Format = enum {
 
 pub const FormatSet = struct {
     pub const empty = std.mem.zeroes(FormatSet);
+
     pub const all = blk: {
         var set = empty;
         inline for (std.meta.fields(FormatSet)) |fld| {
@@ -202,6 +203,13 @@ pub const FormatSet = struct {
         }
         break :blk set;
     };
+
+    pub const default = all
+    // problems with rapidjson
+        .remove(.glTF)
+        .remove(.glTF2)
+    // propietary code:
+        .remove(.C4D);
 
     pub fn add(set: FormatSet, format: Format) FormatSet {
         var copy = set;
