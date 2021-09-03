@@ -389,6 +389,24 @@ const sources = struct {
             assimpRoot() ++ "/contrib/zlib/crc32.c",
             assimpRoot() ++ "/contrib/zlib/adler32.c",
         };
+        const poly2tri = [_][]const u8{
+            assimpRoot() ++ "/contrib/poly2tri/poly2tri/common/shapes.cc",
+            assimpRoot() ++ "/contrib/poly2tri/poly2tri/sweep/sweep_context.cc",
+            assimpRoot() ++ "/contrib/poly2tri/poly2tri/sweep/advancing_front.cc",
+            assimpRoot() ++ "/contrib/poly2tri/poly2tri/sweep/cdt.cc",
+            assimpRoot() ++ "/contrib/poly2tri/poly2tri/sweep/sweep.cc",
+        };
+        const clipper = [_][]const u8{
+            assimpRoot() ++ "/contrib/clipper/clipper.cpp",
+        };
+        const openddlparser = [_][]const u8{
+            assimpRoot() ++ "/contrib/openddlparser/code/OpenDDLParser.cpp",
+            assimpRoot() ++ "/contrib/openddlparser/code/OpenDDLExport.cpp",
+            assimpRoot() ++ "/contrib/openddlparser/code/DDLNode.cpp",
+            assimpRoot() ++ "/contrib/openddlparser/code/OpenDDLCommon.cpp",
+            assimpRoot() ++ "/contrib/openddlparser/code/Value.cpp",
+            assimpRoot() ++ "/contrib/openddlparser/code/OpenDDLStream.cpp",
+        };
     };
 
     const @"3DS" = [_][]const u8{
@@ -502,7 +520,7 @@ const sources = struct {
         src_root ++ "/AssetLib/IFC/IFCMaterial.cpp",
         src_root ++ "/AssetLib/IFC/IFCOpenings.cpp",
         src_root ++ "/AssetLib/IFC/IFCProfile.cpp",
-        src_root ++ "/AssetLib/IFC/IFCReaderGen_4.cpp",
+        // src_root ++ "/AssetLib/IFC/IFCReaderGen_4.cpp", // not used?
         src_root ++ "/AssetLib/IFC/IFCReaderGen1_2x3.cpp",
         src_root ++ "/AssetLib/IFC/IFCReaderGen2_2x3.cpp",
         src_root ++ "/AssetLib/IFC/IFCUtil.cpp",

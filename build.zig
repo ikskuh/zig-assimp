@@ -8,20 +8,10 @@ pub fn build(b: *std.build.Builder) void {
     var sdk = Assimp.init(b);
 
     const formats = Assimp.FormatSet.all
-        .remove(.XGL)
-        .remove(.X)
-        .remove(.Unreal)
-        .remove(.OFF)
-        .remove(.Obj)
-        .remove(.Assbin)
-        .remove(.Assxml)
-        .remove(.Blender)
+    // problems with rapidjson
         .remove(.glTF)
         .remove(.glTF2)
-        .remove(.FBX)
-        .remove(.IFC)
-        .remove(.OpenGEX)
-        .remove(.Q3BSP)
+    // propietary code:
         .remove(.C4D);
 
     const dyn_ex = b.addExecutable("dynamic-example", null);
