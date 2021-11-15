@@ -11,6 +11,8 @@ pub fn build(b: *std.build.Builder) void {
     // problems with rapidjson
         .remove(.glTF)
         .remove(.glTF2)
+    // undefined references
+        .remove(.X3D)
     // propietary code:
         .remove(.C4D);
 
