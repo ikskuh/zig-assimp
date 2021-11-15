@@ -7,14 +7,7 @@ pub fn build(b: *std.build.Builder) void {
 
     var sdk = Assimp.init(b);
 
-    const formats = Assimp.FormatSet.all
-    // problems with rapidjson
-        .remove(.glTF)
-        .remove(.glTF2)
-    // undefined references
-        .remove(.X3D)
-    // propietary code:
-        .remove(.C4D);
+    const formats = Assimp.FormatSet.default;
 
     const dyn_ex = b.addExecutable("dynamic-example", null);
     dyn_ex.setBuildMode(mode);

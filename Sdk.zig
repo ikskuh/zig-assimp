@@ -208,6 +208,8 @@ pub const FormatSet = struct {
     // problems with rapidjson
         .remove(.glTF)
         .remove(.glTF2)
+    // complex build
+        .remove(.X3D)
     // propietary code:
         .remove(.C4D);
 
