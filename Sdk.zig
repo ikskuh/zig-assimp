@@ -88,7 +88,7 @@ pub fn createLibrary(sdk: *Sdk, linkage: std.build.LibExeObjStep.Linkage, format
         }
     }
 
-    inline for (std.meta.declarations(sources.libraries)) |ext_lib| {
+    inline for (comptime std.meta.declarations(sources.libraries)) |ext_lib| {
         addSources(lib, &@field(sources.libraries, ext_lib.name));
     }
 
