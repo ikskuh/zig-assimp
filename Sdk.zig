@@ -2,12 +2,20 @@ const std = @import("std");
 
 const Sdk = @This();
 
-fn sdkRoot() []const u8 {
-    return std.fs.path.dirname(@src().file) orelse ".";
+fn sdkPath(comptime suffix: []const u8) []const u8 {
+    if (suffix[0] != '/') @compileError("relToPath requires an absolute path!");
+    return comptime blk: {
+        const root_dir = std.fs.path.dirname(@src().file) orelse ".";
+        break :blk root_dir ++ suffix;
+    };
 }
 
-fn assimpRoot() []const u8 {
-    return sdkRoot() ++ "/vendor/assimp";
+fn assimpPath(comptime suffix: []const u8) []const u8 {
+    if (suffix[0] != '/') @compileError("relToPath requires an absolute path!");
+    return comptime blk: {
+        const root_dir = sdkPath("/vendor/assimp");
+        break :blk root_dir ++ suffix;
+    };
 }
 
 builder: *std.build.Builder,
@@ -61,14 +69,14 @@ pub fn createLibrary(sdk: *Sdk, linkage: std.build.LibExeObjStep.Linkage, format
         lib.addIncludeDir(path);
     }
 
-    lib.addIncludeDir(assimpRoot());
-    lib.addIncludeDir(assimpRoot() ++ "/contrib");
-    lib.addIncludeDir(assimpRoot() ++ "/code");
-    lib.addIncludeDir(assimpRoot() ++ "/contrib/pugixml/src/");
-    lib.addIncludeDir(assimpRoot() ++ "/contrib/rapidjson/include");
-    lib.addIncludeDir(assimpRoot() ++ "/contrib/unzip");
-    lib.addIncludeDir(assimpRoot() ++ "/contrib/zlib");
-    lib.addIncludeDir(assimpRoot() ++ "/contrib/openddlparser/include");
+    lib.addIncludeDir(assimpPath("/"));
+    lib.addIncludeDir(assimpPath("/contrib"));
+    lib.addIncludeDir(assimpPath("/code"));
+    lib.addIncludeDir(assimpPath("/contrib/pugixml/src/"));
+    lib.addIncludeDir(assimpPath("/contrib/rapidjson/include"));
+    lib.addIncludeDir(assimpPath("/contrib/unzip"));
+    lib.addIncludeDir(assimpPath("/contrib/zlib"));
+    lib.addIncludeDir(assimpPath("/contrib/openddlparser/include"));
 
     addSources(lib, &sources.common);
 
@@ -119,8 +127,8 @@ pub fn getIncludePaths(sdk: *Sdk) []const []const u8 {
     _ = sdk;
     const T = struct {
         const paths = [_][]const u8{
-            sdkRoot() ++ "/include",
-            sdkRoot() ++ "/vendor/assimp/include",
+            sdkPath("/include"),
+            sdkPath("/vendor/assimp/include"),
         };
     };
     return &T.paths;
@@ -288,7 +296,7 @@ pub const FormatSet = struct {
 };
 
 const sources = struct {
-    const src_root = assimpRoot() ++ "/code";
+    const src_root = assimpPath("/code");
 
     const common = [_][]const u8{
         src_root ++ "/CApi/AssimpCExport.cpp",
@@ -359,24 +367,24 @@ const sources = struct {
 
     const libraries = struct {
         const unzip = [_][]const u8{
-            assimpRoot() ++ "/contrib/unzip/unzip.c",
-            assimpRoot() ++ "/contrib/unzip/ioapi.c",
-            assimpRoot() ++ "/contrib/unzip/crypt.c",
+            assimpPath("/contrib/unzip/unzip.c"),
+            assimpPath("/contrib/unzip/ioapi.c"),
+            assimpPath("/contrib/unzip/crypt.c"),
         };
         const zip = [_][]const u8{
-            assimpRoot() ++ "/contrib/zip/src/zip.c",
+            assimpPath("/contrib/zip/src/zip.c"),
         };
         const zlib = [_][]const u8{
-            assimpRoot() ++ "/contrib/zlib/inflate.c",
-            assimpRoot() ++ "/contrib/zlib/infback.c",
-            assimpRoot() ++ "/contrib/zlib/gzclose.c",
-            assimpRoot() ++ "/contrib/zlib/gzread.c",
-            assimpRoot() ++ "/contrib/zlib/inftrees.c",
-            assimpRoot() ++ "/contrib/zlib/gzwrite.c",
-            assimpRoot() ++ "/contrib/zlib/compress.c",
-            assimpRoot() ++ "/contrib/zlib/inffast.c",
-            assimpRoot() ++ "/contrib/zlib/uncompr.c",
-            assimpRoot() ++ "/contrib/zlib/gzlib.c",
+            assimpPath("/contrib/zlib/inflate.c"),
+            assimpPath("/contrib/zlib/infback.c"),
+            assimpPath("/contrib/zlib/gzclose.c"),
+            assimpPath("/contrib/zlib/gzread.c"),
+            assimpPath("/contrib/zlib/inftrees.c"),
+            assimpPath("/contrib/zlib/gzwrite.c"),
+            assimpPath("/contrib/zlib/compress.c"),
+            assimpPath("/contrib/zlib/inffast.c"),
+            assimpPath("/contrib/zlib/uncompr.c"),
+            assimpPath("/contrib/zlib/gzlib.c"),
             // assimpRoot() ++ "/contrib/zlib/contrib/testzlib/testzlib.c",
             // assimpRoot() ++ "/contrib/zlib/contrib/inflate86/inffas86.c",
             // assimpRoot() ++ "/contrib/zlib/contrib/masmx64/inffas8664.c",
@@ -393,29 +401,29 @@ const sources = struct {
             // assimpRoot() ++ "/contrib/zlib/contrib/puff/puff.c",
             // assimpRoot() ++ "/contrib/zlib/contrib/blast/blast.c",
             // assimpRoot() ++ "/contrib/zlib/contrib/untgz/untgz.c",
-            assimpRoot() ++ "/contrib/zlib/trees.c",
-            assimpRoot() ++ "/contrib/zlib/zutil.c",
-            assimpRoot() ++ "/contrib/zlib/deflate.c",
-            assimpRoot() ++ "/contrib/zlib/crc32.c",
-            assimpRoot() ++ "/contrib/zlib/adler32.c",
+            assimpPath("/contrib/zlib/trees.c"),
+            assimpPath("/contrib/zlib/zutil.c"),
+            assimpPath("/contrib/zlib/deflate.c"),
+            assimpPath("/contrib/zlib/crc32.c"),
+            assimpPath("/contrib/zlib/adler32.c"),
         };
         const poly2tri = [_][]const u8{
-            assimpRoot() ++ "/contrib/poly2tri/poly2tri/common/shapes.cc",
-            assimpRoot() ++ "/contrib/poly2tri/poly2tri/sweep/sweep_context.cc",
-            assimpRoot() ++ "/contrib/poly2tri/poly2tri/sweep/advancing_front.cc",
-            assimpRoot() ++ "/contrib/poly2tri/poly2tri/sweep/cdt.cc",
-            assimpRoot() ++ "/contrib/poly2tri/poly2tri/sweep/sweep.cc",
+            assimpPath("/contrib/poly2tri/poly2tri/common/shapes.cc"),
+            assimpPath("/contrib/poly2tri/poly2tri/sweep/sweep_context.cc"),
+            assimpPath("/contrib/poly2tri/poly2tri/sweep/advancing_front.cc"),
+            assimpPath("/contrib/poly2tri/poly2tri/sweep/cdt.cc"),
+            assimpPath("/contrib/poly2tri/poly2tri/sweep/sweep.cc"),
         };
         const clipper = [_][]const u8{
-            assimpRoot() ++ "/contrib/clipper/clipper.cpp",
+            assimpPath("/contrib/clipper/clipper.cpp"),
         };
         const openddlparser = [_][]const u8{
-            assimpRoot() ++ "/contrib/openddlparser/code/OpenDDLParser.cpp",
-            assimpRoot() ++ "/contrib/openddlparser/code/OpenDDLExport.cpp",
-            assimpRoot() ++ "/contrib/openddlparser/code/DDLNode.cpp",
-            assimpRoot() ++ "/contrib/openddlparser/code/OpenDDLCommon.cpp",
-            assimpRoot() ++ "/contrib/openddlparser/code/Value.cpp",
-            assimpRoot() ++ "/contrib/openddlparser/code/OpenDDLStream.cpp",
+            assimpPath("/contrib/openddlparser/code/OpenDDLParser.cpp"),
+            assimpPath("/contrib/openddlparser/code/OpenDDLExport.cpp"),
+            assimpPath("/contrib/openddlparser/code/DDLNode.cpp"),
+            assimpPath("/contrib/openddlparser/code/OpenDDLCommon.cpp"),
+            assimpPath("/contrib/openddlparser/code/Value.cpp"),
+            assimpPath("/contrib/openddlparser/code/OpenDDLStream.cpp"),
         };
     };
 
