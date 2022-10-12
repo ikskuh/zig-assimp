@@ -105,19 +105,13 @@ pub fn createLibrary(sdk: *Sdk, linkage: std.build.LibExeObjStep.Linkage, format
 
 fn addSources(lib: *std.build.LibExeObjStep, file_list: []const []const u8) void {
     const flags = [_][]const u8{};
-    const cflags = flags ++ [_][]const u8{
-        "-std=c11",
-    };
-    const cxxflags = flags ++ [_][]const u8{
-        "-std=c++11",
-    };
 
     for (file_list) |src| {
         const ext = std.fs.path.extension(src);
         if (std.mem.eql(u8, ext, ".c")) {
-            lib.addCSourceFile(src, &cflags);
+            lib.addCSourceFile(src, &flags);
         } else {
-            lib.addCSourceFile(src, &cxxflags);
+            lib.addCSourceFile(src, &flags);
         }
     }
 }
