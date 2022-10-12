@@ -14,7 +14,7 @@ pub fn build(b: *std.build.Builder) void {
     dyn_ex.addCSourceFile("src/example.cpp", &[_][]const u8{"-std=c++17"});
     dyn_ex.linkLibrary(sdk.createLibrary(.dynamic, formats));
     for (sdk.getIncludePaths()) |path| {
-        dyn_ex.addIncludeDir(path);
+        dyn_ex.addIncludePath(path);
     }
     dyn_ex.linkLibC();
     dyn_ex.linkLibCpp();

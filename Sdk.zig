@@ -66,17 +66,17 @@ pub fn createLibrary(sdk: *Sdk, linkage: std.build.LibExeObjStep.Linkage, format
     lib.linkLibCpp();
 
     for (sdk.getIncludePaths()) |path| {
-        lib.addIncludeDir(path);
+        lib.addIncludePath(path);
     }
 
-    lib.addIncludeDir(assimpPath("/"));
-    lib.addIncludeDir(assimpPath("/contrib"));
-    lib.addIncludeDir(assimpPath("/code"));
-    lib.addIncludeDir(assimpPath("/contrib/pugixml/src/"));
-    lib.addIncludeDir(assimpPath("/contrib/rapidjson/include"));
-    lib.addIncludeDir(assimpPath("/contrib/unzip"));
-    lib.addIncludeDir(assimpPath("/contrib/zlib"));
-    lib.addIncludeDir(assimpPath("/contrib/openddlparser/include"));
+    lib.addIncludePath(assimpPath("/"));
+    lib.addIncludePath(assimpPath("/contrib"));
+    lib.addIncludePath(assimpPath("/code"));
+    lib.addIncludePath(assimpPath("/contrib/pugixml/src/"));
+    lib.addIncludePath(assimpPath("/contrib/rapidjson/include"));
+    lib.addIncludePath(assimpPath("/contrib/unzip"));
+    lib.addIncludePath(assimpPath("/contrib/zlib"));
+    lib.addIncludePath(assimpPath("/contrib/openddlparser/include"));
 
     addSources(lib, &sources.common);
 
@@ -142,7 +142,7 @@ pub fn addTo(sdk: *Sdk, target: *std.build.LibExeObjStep, linkage: std.build.Lib
     lib.setBuildMode(target.build_mode);
     target.linkLibrary(lib);
     for (sdk.getIncludePaths()) |path| {
-        target.addIncludeDir(path);
+        target.addIncludePath(path);
     }
 }
 
