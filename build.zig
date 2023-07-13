@@ -1,13 +1,13 @@
 const std = @import("std");
 
-const Assimp = @import("Sdk.zig");
+pub const Assimp = @import("Sdk.zig");
 
 pub fn build(b: *std.build.Builder) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     var sdk = Assimp.init(b);
 
-    var formats = Assimp.FormatSet.all;
+    const formats = Assimp.FormatSet.all;
 
     const dyn_ex = b.addExecutable(.{
         .name = "dynamic-example",
