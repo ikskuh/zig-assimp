@@ -41,7 +41,7 @@ const UpperCaseFormatter = std.fmt.Formatter(struct {
         var tmp: [256]u8 = undefined;
         var i: usize = 0;
         while (i < string.len) : (i += tmp.len) {
-            try writer.writeAll(std.ascii.upperString(&tmp, string[i..std.math.min(string.len, i + tmp.len)]));
+            try writer.writeAll(std.ascii.upperString(&tmp, string[i..@min(string.len, i + tmp.len)]));
         }
     }
 }.format);
@@ -56,10 +56,18 @@ const define_name_patches = struct {
 };
 
 /// Creates a new LibExeObjStep that will build Assimp. `linkage`
-pub fn createLibrary(sdk: *Sdk, linkage: std.build.LibExeObjStep.Linkage, formats: FormatSet) *std.build.LibExeObjStep {
+pub fn createLibrary(sdk: *Sdk, linkage: std.build.LibExeObjStep.Linkage, formats: FormatSet, target: std.zig.CrossTarget, optimize: std.builtin.Mode) *std.build.LibExeObjStep {
     const lib = switch (linkage) {
-        .static => sdk.builder.addStaticLibrary("assimp", null),
-        .dynamic => sdk.builder.addSharedLibrary("assimp", null, .unversioned),
+        .static => sdk.builder.addStaticLibrary(.{
+            .name = "assimp",
+            .optimize = optimize,
+            .target = target,
+        }),
+        .dynamic => sdk.builder.addSharedLibrary(.{
+            .name = "assimp",
+            .optimize = optimize,
+            .target = target,
+        }),
     };
 
     lib.linkLibC();
@@ -131,9 +139,7 @@ pub fn getIncludePaths(sdk: *Sdk) []const []const u8 {
 /// Adds Assimp to the given `target`, using both `build_mode` and `target` from it.
 /// Will link dynamically or statically depending on linkage.
 pub fn addTo(sdk: *Sdk, target: *std.build.LibExeObjStep, linkage: std.build.LibExeObjStep.Linkage, formats: FormatSet) void {
-    const lib = sdk.createLibrary(linkage, formats);
-    lib.setTarget(target.target);
-    lib.setBuildMode(target.build_mode);
+    var lib = sdk.createLibrary(linkage, formats, target.target, target.optimize);
     target.linkLibrary(lib);
     for (sdk.getIncludePaths()) |path| {
         target.addIncludePath(path);
@@ -143,56 +149,56 @@ pub fn addTo(sdk: *Sdk, target: *std.build.LibExeObjStep, linkage: std.build.Lib
 pub const Format = enum {
     @"3DS",
     @"3MF",
-    @"AC",
-    @"AMF",
-    @"ASE",
-    @"Assbin",
-    @"Assjson",
-    @"Assxml",
-    @"B3D",
-    @"Blender",
-    @"BVH",
-    @"C4D",
-    @"COB",
-    @"Collada",
-    @"CSM",
-    @"DXF",
-    @"FBX",
-    @"glTF",
-    @"glTF2",
-    @"HMP",
-    @"IFC",
-    @"Irr",
-    @"LWO",
-    @"LWS",
-    @"M3D",
-    @"MD2",
-    @"MD3",
-    @"MD5",
-    @"MDC",
-    @"MDL",
-    @"MMD",
-    @"MS3D",
-    @"NDO",
-    @"NFF",
-    @"Obj",
-    @"OFF",
-    @"Ogre",
-    @"OpenGEX",
-    @"Ply",
-    @"Q3BSP",
-    @"Q3D",
-    @"Raw",
-    @"SIB",
-    @"SMD",
-    @"Step",
-    @"STEPParser",
-    @"STL",
-    @"Terragen",
-    @"Unreal",
-    @"X",
-    @"X3D",
-    @"XGL",
+    AC,
+    AMF,
+    ASE,
+    Assbin,
+    Assjson,
+    Assxml,
+    B3D,
+    Blender,
+    BVH,
+    C4D,
+    COB,
+    Collada,
+    CSM,
+    DXF,
+    FBX,
+    glTF,
+    glTF2,
+    HMP,
+    IFC,
+    Irr,
+    LWO,
+    LWS,
+    M3D,
+    MD2,
+    MD3,
+    MD5,
+    MDC,
+    MDL,
+    MMD,
+    MS3D,
+    NDO,
+    NFF,
+    Obj,
+    OFF,
+    Ogre,
+    OpenGEX,
+    Ply,
+    Q3BSP,
+    Q3D,
+    Raw,
+    SIB,
+    SMD,
+    Step,
+    STEPParser,
+    STL,
+    Terragen,
+    Unreal,
+    X,
+    X3D,
+    XGL,
 };
 
 pub const FormatSet = struct {
@@ -237,56 +243,56 @@ pub const FormatSet = struct {
 
     @"3DS": bool,
     @"3MF": bool,
-    @"AC": bool,
-    @"AMF": bool,
-    @"ASE": bool,
-    @"Assbin": bool,
-    @"Assjson": bool,
-    @"Assxml": bool,
-    @"B3D": bool,
-    @"Blender": bool,
-    @"BVH": bool,
-    @"C4D": bool,
-    @"COB": bool,
-    @"Collada": bool,
-    @"CSM": bool,
-    @"DXF": bool,
-    @"FBX": bool,
-    @"glTF": bool,
-    @"glTF2": bool,
-    @"HMP": bool,
-    @"IFC": bool,
-    @"Irr": bool,
-    @"LWO": bool,
-    @"LWS": bool,
-    @"M3D": bool,
-    @"MD2": bool,
-    @"MD3": bool,
-    @"MD5": bool,
-    @"MDC": bool,
-    @"MDL": bool,
-    @"MMD": bool,
-    @"MS3D": bool,
-    @"NDO": bool,
-    @"NFF": bool,
-    @"Obj": bool,
-    @"OFF": bool,
-    @"Ogre": bool,
-    @"OpenGEX": bool,
-    @"Ply": bool,
-    @"Q3BSP": bool,
-    @"Q3D": bool,
-    @"Raw": bool,
-    @"SIB": bool,
-    @"SMD": bool,
-    @"Step": bool,
-    @"STEPParser": bool,
-    @"STL": bool,
-    @"Terragen": bool,
-    @"Unreal": bool,
-    @"X": bool,
-    @"X3D": bool,
-    @"XGL": bool,
+    AC: bool,
+    AMF: bool,
+    ASE: bool,
+    Assbin: bool,
+    Assjson: bool,
+    Assxml: bool,
+    B3D: bool,
+    Blender: bool,
+    BVH: bool,
+    C4D: bool,
+    COB: bool,
+    Collada: bool,
+    CSM: bool,
+    DXF: bool,
+    FBX: bool,
+    glTF: bool,
+    glTF2: bool,
+    HMP: bool,
+    IFC: bool,
+    Irr: bool,
+    LWO: bool,
+    LWS: bool,
+    M3D: bool,
+    MD2: bool,
+    MD3: bool,
+    MD5: bool,
+    MDC: bool,
+    MDL: bool,
+    MMD: bool,
+    MS3D: bool,
+    NDO: bool,
+    NFF: bool,
+    Obj: bool,
+    OFF: bool,
+    Ogre: bool,
+    OpenGEX: bool,
+    Ply: bool,
+    Q3BSP: bool,
+    Q3D: bool,
+    Raw: bool,
+    SIB: bool,
+    SMD: bool,
+    Step: bool,
+    STEPParser: bool,
+    STL: bool,
+    Terragen: bool,
+    Unreal: bool,
+    X: bool,
+    X3D: bool,
+    XGL: bool,
 };
 
 const sources = struct {
@@ -432,37 +438,37 @@ const sources = struct {
         src_root ++ "/AssetLib/3MF/D3MFOpcPackage.cpp",
         src_root ++ "/AssetLib/3MF/XmlSerializer.cpp",
     };
-    const @"AC" = [_][]const u8{
+    const AC = [_][]const u8{
         src_root ++ "/AssetLib/AC/ACLoader.cpp",
     };
-    const @"AMF" = [_][]const u8{
+    const AMF = [_][]const u8{
         src_root ++ "/AssetLib/AMF/AMFImporter_Geometry.cpp",
         src_root ++ "/AssetLib/AMF/AMFImporter_Material.cpp",
         src_root ++ "/AssetLib/AMF/AMFImporter_Postprocess.cpp",
         src_root ++ "/AssetLib/AMF/AMFImporter.cpp",
     };
-    const @"ASE" = [_][]const u8{
+    const ASE = [_][]const u8{
         src_root ++ "/AssetLib/ASE/ASELoader.cpp",
         src_root ++ "/AssetLib/ASE/ASEParser.cpp",
     };
-    const @"Assbin" = [_][]const u8{
+    const Assbin = [_][]const u8{
         src_root ++ "/AssetLib/Assbin/AssbinExporter.cpp",
         src_root ++ "/AssetLib/Assbin/AssbinFileWriter.cpp",
         src_root ++ "/AssetLib/Assbin/AssbinLoader.cpp",
     };
-    const @"Assjson" = [_][]const u8{
+    const Assjson = [_][]const u8{
         src_root ++ "/AssetLib/Assjson/cencode.c",
         src_root ++ "/AssetLib/Assjson/json_exporter.cpp",
         src_root ++ "/AssetLib/Assjson/mesh_splitter.cpp",
     };
-    const @"Assxml" = [_][]const u8{
+    const Assxml = [_][]const u8{
         src_root ++ "/AssetLib/Assxml/AssxmlExporter.cpp",
         src_root ++ "/AssetLib/Assxml/AssxmlFileWriter.cpp",
     };
-    const @"B3D" = [_][]const u8{
+    const B3D = [_][]const u8{
         src_root ++ "/AssetLib/B3D/B3DImporter.cpp",
     };
-    const @"Blender" = [_][]const u8{
+    const Blender = [_][]const u8{
         src_root ++ "/AssetLib/Blender/BlenderBMesh.cpp",
         src_root ++ "/AssetLib/Blender/BlenderCustomData.cpp",
         src_root ++ "/AssetLib/Blender/BlenderDNA.cpp",
@@ -471,28 +477,28 @@ const sources = struct {
         src_root ++ "/AssetLib/Blender/BlenderScene.cpp",
         src_root ++ "/AssetLib/Blender/BlenderTessellator.cpp",
     };
-    const @"BVH" = [_][]const u8{
+    const BVH = [_][]const u8{
         src_root ++ "/AssetLib/BVH/BVHLoader.cpp",
     };
-    const @"C4D" = [_][]const u8{
+    const C4D = [_][]const u8{
         src_root ++ "/AssetLib/C4D/C4DImporter.cpp",
     };
-    const @"COB" = [_][]const u8{
+    const COB = [_][]const u8{
         src_root ++ "/AssetLib/COB/COBLoader.cpp",
     };
-    const @"Collada" = [_][]const u8{
+    const Collada = [_][]const u8{
         src_root ++ "/AssetLib/Collada/ColladaExporter.cpp",
         src_root ++ "/AssetLib/Collada/ColladaHelper.cpp",
         src_root ++ "/AssetLib/Collada/ColladaLoader.cpp",
         src_root ++ "/AssetLib/Collada/ColladaParser.cpp",
     };
-    const @"CSM" = [_][]const u8{
+    const CSM = [_][]const u8{
         src_root ++ "/AssetLib/CSM/CSMLoader.cpp",
     };
-    const @"DXF" = [_][]const u8{
+    const DXF = [_][]const u8{
         src_root ++ "/AssetLib/DXF/DXFLoader.cpp",
     };
-    const @"FBX" = [_][]const u8{
+    const FBX = [_][]const u8{
         src_root ++ "/AssetLib/FBX/FBXAnimation.cpp",
         src_root ++ "/AssetLib/FBX/FBXBinaryTokenizer.cpp",
         src_root ++ "/AssetLib/FBX/FBXConverter.cpp",
@@ -512,19 +518,19 @@ const sources = struct {
         src_root ++ "/AssetLib/FBX/FBXTokenizer.cpp",
         src_root ++ "/AssetLib/FBX/FBXUtil.cpp",
     };
-    const @"glTF" = [_][]const u8{
+    const glTF = [_][]const u8{
         src_root ++ "/AssetLib/glTF/glTFCommon.cpp",
         src_root ++ "/AssetLib/glTF/glTFExporter.cpp",
         src_root ++ "/AssetLib/glTF/glTFImporter.cpp",
     };
-    const @"glTF2" = [_][]const u8{
+    const glTF2 = [_][]const u8{
         src_root ++ "/AssetLib/glTF2/glTF2Exporter.cpp",
         src_root ++ "/AssetLib/glTF2/glTF2Importer.cpp",
     };
-    const @"HMP" = [_][]const u8{
+    const HMP = [_][]const u8{
         src_root ++ "/AssetLib/HMP/HMPLoader.cpp",
     };
-    const @"IFC" = [_][]const u8{
+    const IFC = [_][]const u8{
         src_root ++ "/AssetLib/IFC/IFCBoolean.cpp",
         src_root ++ "/AssetLib/IFC/IFCCurve.cpp",
         src_root ++ "/AssetLib/IFC/IFCGeometry.cpp",
@@ -537,124 +543,124 @@ const sources = struct {
         src_root ++ "/AssetLib/IFC/IFCReaderGen2_2x3.cpp",
         src_root ++ "/AssetLib/IFC/IFCUtil.cpp",
     };
-    const @"Irr" = [_][]const u8{
+    const Irr = [_][]const u8{
         src_root ++ "/AssetLib/Irr/IRRLoader.cpp",
         src_root ++ "/AssetLib/Irr/IRRMeshLoader.cpp",
         src_root ++ "/AssetLib/Irr/IRRShared.cpp",
     };
-    const @"LWO" = [_][]const u8{
+    const LWO = [_][]const u8{
         src_root ++ "/AssetLib/LWO/LWOAnimation.cpp",
         src_root ++ "/AssetLib/LWO/LWOBLoader.cpp",
         src_root ++ "/AssetLib/LWO/LWOLoader.cpp",
         src_root ++ "/AssetLib/LWO/LWOMaterial.cpp",
         src_root ++ "/AssetLib/LWS/LWSLoader.cpp",
     };
-    const @"LWS" = [_][]const u8{
+    const LWS = [_][]const u8{
         src_root ++ "/AssetLib/M3D/M3DExporter.cpp",
         src_root ++ "/AssetLib/M3D/M3DImporter.cpp",
         src_root ++ "/AssetLib/M3D/M3DWrapper.cpp",
     };
-    const @"M3D" = [_][]const u8{};
-    const @"MD2" = [_][]const u8{
+    const M3D = [_][]const u8{};
+    const MD2 = [_][]const u8{
         src_root ++ "/AssetLib/MD2/MD2Loader.cpp",
     };
-    const @"MD3" = [_][]const u8{
+    const MD3 = [_][]const u8{
         src_root ++ "/AssetLib/MD3/MD3Loader.cpp",
     };
-    const @"MD5" = [_][]const u8{
+    const MD5 = [_][]const u8{
         src_root ++ "/AssetLib/MD5/MD5Loader.cpp",
         src_root ++ "/AssetLib/MD5/MD5Parser.cpp",
     };
-    const @"MDC" = [_][]const u8{
+    const MDC = [_][]const u8{
         src_root ++ "/AssetLib/MDC/MDCLoader.cpp",
     };
-    const @"MDL" = [_][]const u8{
+    const MDL = [_][]const u8{
         src_root ++ "/AssetLib/MDL/HalfLife/HL1MDLLoader.cpp",
         src_root ++ "/AssetLib/MDL/HalfLife/UniqueNameGenerator.cpp",
         src_root ++ "/AssetLib/MDL/MDLLoader.cpp",
         src_root ++ "/AssetLib/MDL/MDLMaterialLoader.cpp",
     };
-    const @"MMD" = [_][]const u8{
+    const MMD = [_][]const u8{
         src_root ++ "/AssetLib/MMD/MMDImporter.cpp",
         src_root ++ "/AssetLib/MMD/MMDPmxParser.cpp",
     };
-    const @"MS3D" = [_][]const u8{
+    const MS3D = [_][]const u8{
         src_root ++ "/AssetLib/MS3D/MS3DLoader.cpp",
     };
-    const @"NDO" = [_][]const u8{
+    const NDO = [_][]const u8{
         src_root ++ "/AssetLib/NDO/NDOLoader.cpp",
     };
-    const @"NFF" = [_][]const u8{
+    const NFF = [_][]const u8{
         src_root ++ "/AssetLib/NFF/NFFLoader.cpp",
     };
-    const @"Obj" = [_][]const u8{
+    const Obj = [_][]const u8{
         src_root ++ "/AssetLib/Obj/ObjExporter.cpp",
         src_root ++ "/AssetLib/Obj/ObjFileImporter.cpp",
         src_root ++ "/AssetLib/Obj/ObjFileMtlImporter.cpp",
         src_root ++ "/AssetLib/Obj/ObjFileParser.cpp",
     };
-    const @"OFF" = [_][]const u8{
+    const OFF = [_][]const u8{
         src_root ++ "/AssetLib/OFF/OFFLoader.cpp",
     };
-    const @"Ogre" = [_][]const u8{
+    const Ogre = [_][]const u8{
         src_root ++ "/AssetLib/Ogre/OgreBinarySerializer.cpp",
         src_root ++ "/AssetLib/Ogre/OgreImporter.cpp",
         src_root ++ "/AssetLib/Ogre/OgreMaterial.cpp",
         src_root ++ "/AssetLib/Ogre/OgreStructs.cpp",
         src_root ++ "/AssetLib/Ogre/OgreXmlSerializer.cpp",
     };
-    const @"OpenGEX" = [_][]const u8{
+    const OpenGEX = [_][]const u8{
         src_root ++ "/AssetLib/OpenGEX/OpenGEXExporter.cpp",
         src_root ++ "/AssetLib/OpenGEX/OpenGEXImporter.cpp",
     };
-    const @"Ply" = [_][]const u8{
+    const Ply = [_][]const u8{
         src_root ++ "/AssetLib/Ply/PlyExporter.cpp",
         src_root ++ "/AssetLib/Ply/PlyLoader.cpp",
         src_root ++ "/AssetLib/Ply/PlyParser.cpp",
     };
-    const @"Q3BSP" = [_][]const u8{
+    const Q3BSP = [_][]const u8{
         src_root ++ "/AssetLib/Q3BSP/Q3BSPFileImporter.cpp",
         src_root ++ "/AssetLib/Q3BSP/Q3BSPFileParser.cpp",
     };
-    const @"Q3D" = [_][]const u8{
+    const Q3D = [_][]const u8{
         src_root ++ "/AssetLib/Q3D/Q3DLoader.cpp",
     };
-    const @"Raw" = [_][]const u8{
+    const Raw = [_][]const u8{
         src_root ++ "/AssetLib/Raw/RawLoader.cpp",
     };
-    const @"SIB" = [_][]const u8{
+    const SIB = [_][]const u8{
         src_root ++ "/AssetLib/SIB/SIBImporter.cpp",
     };
-    const @"SMD" = [_][]const u8{
+    const SMD = [_][]const u8{
         src_root ++ "/AssetLib/SMD/SMDLoader.cpp",
     };
-    const @"Step" = [_][]const u8{
+    const Step = [_][]const u8{
         src_root ++ "/AssetLib/Step/StepExporter.cpp",
     };
-    const @"STEPParser" = [_][]const u8{
+    const STEPParser = [_][]const u8{
         src_root ++ "/AssetLib/STEPParser/STEPFileEncoding.cpp",
         src_root ++ "/AssetLib/STEPParser/STEPFileReader.cpp",
     };
-    const @"STL" = [_][]const u8{
+    const STL = [_][]const u8{
         src_root ++ "/AssetLib/STL/STLExporter.cpp",
         src_root ++ "/AssetLib/STL/STLLoader.cpp",
     };
-    const @"Terragen" = [_][]const u8{
+    const Terragen = [_][]const u8{
         src_root ++ "/AssetLib/Terragen/TerragenLoader.cpp",
     };
-    const @"Unreal" = [_][]const u8{
+    const Unreal = [_][]const u8{
         src_root ++ "/AssetLib/Unreal/UnrealLoader.cpp",
     };
-    const @"X" = [_][]const u8{
+    const X = [_][]const u8{
         src_root ++ "/AssetLib/X/XFileExporter.cpp",
         src_root ++ "/AssetLib/X/XFileImporter.cpp",
         src_root ++ "/AssetLib/X/XFileParser.cpp",
     };
-    const @"X3D" = [_][]const u8{
+    const X3D = [_][]const u8{
         src_root ++ "/AssetLib/X3D/X3DExporter.cpp",
         src_root ++ "/AssetLib/X3D/X3DImporter.cpp",
     };
-    const @"XGL" = [_][]const u8{
+    const XGL = [_][]const u8{
         src_root ++ "/AssetLib/XGL/XGLLoader.cpp",
     };
 };
