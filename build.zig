@@ -82,6 +82,8 @@ pub fn build(b: *std.Build) !void {
         }
     }
 
+    b.installArtifact(lib);
+
     const example = b.addExecutable(.{
         .name = "static-example",
         .target = target,
