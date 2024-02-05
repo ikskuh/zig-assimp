@@ -53,6 +53,8 @@ pub fn build(b: *std.Build) !void {
         });
     }
 
+    var enabled_formats = std.BufSet.init(b.allocator);
+    defer enabled_formats.deinit();
     var tokenizer = std.mem.tokenize(u8, formats, ",");
     while (tokenizer.next()) |format| {
         var found: bool = false;
@@ -64,12 +66,8 @@ pub fn build(b: *std.Build) !void {
                     .flags = &.{},
                 });
 
-                const define_importer = b.fmt("ASSIMP_BUILD_NO_{}_IMPORTER", .{fmtUpperCase(format_files.name)});
-                const define_exporter = b.fmt("ASSIMP_BUILD_NO_{}_EXPORTER", .{fmtUpperCase(format_files.name)});
-
-                lib.defineCMacro(define_importer, null);
-                lib.defineCMacro(define_exporter, null);
                 found = true;
+                try enabled_formats.insert(format);
             }
         }
         if (!found) {
@@ -79,6 +77,16 @@ pub fn build(b: *std.Build) !void {
                 std.debug.print("    {s}\n", .{format_files.name});
             }
             return error.InvalidFormat;
+        }
+    }
+
+    inline for (comptime std.meta.declarations(sources.formats)) |format_files| {
+        if (!enabled_formats.contains(format_files.name)) {
+            const define_importer = b.fmt("ASSIMP_BUILD_NO_{}_IMPORTER", .{fmtUpperCase(format_files.name)});
+            const define_exporter = b.fmt("ASSIMP_BUILD_NO_{}_EXPORTER", .{fmtUpperCase(format_files.name)});
+
+            lib.defineCMacro(define_importer, null);
+            lib.defineCMacro(define_exporter, null);
         }
     }
 
@@ -110,6 +118,7 @@ const sources = struct {
         "code/Common/Bitmap.cpp",
         "code/Common/CreateAnimMesh.cpp",
         "code/Common/DefaultIOStream.cpp",
+        "code/Common/IOSystem.cpp",
         "code/Common/DefaultIOSystem.cpp",
         "code/Common/DefaultLogger.cpp",
         "code/Common/Exceptional.cpp",
@@ -132,6 +141,7 @@ const sources = struct {
         "code/Common/Version.cpp",
         "code/Common/VertexTriangleAdjacency.cpp",
         "code/Common/ZipArchiveIOSystem.cpp",
+        "code/Geometry/GeometryUtils.cpp",
         "code/Material/MaterialSystem.cpp",
         "code/Pbrt/PbrtExporter.cpp",
         "code/PostProcessing/ArmaturePopulate.cpp",
@@ -270,7 +280,7 @@ const sources = struct {
         pub const B3D = [_][]const u8{
             "code/AssetLib/B3D/B3DImporter.cpp",
         };
-        pub const Blender = [_][]const u8{
+        pub const Blend = [_][]const u8{
             "code/AssetLib/Blender/BlenderBMesh.cpp",
             "code/AssetLib/Blender/BlenderCustomData.cpp",
             "code/AssetLib/Blender/BlenderDNA.cpp",
@@ -347,8 +357,14 @@ const sources = struct {
         };
         pub const Irr = [_][]const u8{
             "code/AssetLib/Irr/IRRLoader.cpp",
+            "code/AssetLib/Irr/IRRShared.cpp",
+        };
+        pub const IrrMesh = [_][]const u8{
             "code/AssetLib/Irr/IRRMeshLoader.cpp",
             "code/AssetLib/Irr/IRRShared.cpp",
+        };
+        pub const IQM = [_][]const u8{
+            "AssetLib/IQM/IQMImporter.cpp",
         };
         pub const LWO = [_][]const u8{
             "code/AssetLib/LWO/LWOAnimation.cpp",
@@ -450,7 +466,7 @@ const sources = struct {
         pub const Terragen = [_][]const u8{
             "code/AssetLib/Terragen/TerragenLoader.cpp",
         };
-        pub const Unreal = [_][]const u8{
+        pub const @"3D" = [_][]const u8{
             "code/AssetLib/Unreal/UnrealLoader.cpp",
         };
         pub const X = [_][]const u8{
