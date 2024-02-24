@@ -4,6 +4,7 @@ pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     const formats = b.option([]const u8, "formats", "Comma separated list of enabled formats, for example: STL,3MF,Obj") orelse "";
+    const use_double_precision = b.option(bool, "double", "All data will be stored as double values") orelse false;
     const assimp = b.dependency("assimp", .{});
 
     const lib = b.addStaticLibrary(.{
@@ -20,7 +21,7 @@ pub fn build(b: *std.Build) !void {
             .style = .{ .cmake = assimp.path("include/assimp/config.h.in") },
             .include_path = "assimp/config.h",
         },
-        .{},
+        .{ .ASSIMP_DOUBLE_PRECISION = use_double_precision },
     );
     lib.addConfigHeader(config_h);
     lib.addIncludePath(assimp.path("include"));
