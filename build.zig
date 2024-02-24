@@ -15,8 +15,16 @@ pub fn build(b: *std.Build) !void {
     lib.linkLibC();
     lib.linkLibCpp();
 
-    lib.addIncludePath(.{ .path = "include" });
+    const config_h = b.addConfigHeader(
+        .{
+            .style = .{ .cmake = assimp.path("include/assimp/config.h.in") },
+            .include_path = "assimp/config.h",
+        },
+        .{},
+    );
+    lib.addConfigHeader(config_h);
     lib.addIncludePath(assimp.path("include"));
+    lib.addIncludePath(.{ .path = "include" });
 
     lib.addIncludePath(assimp.path(""));
     lib.addIncludePath(assimp.path("contrib"));
@@ -27,6 +35,8 @@ pub fn build(b: *std.Build) !void {
     lib.addIncludePath(assimp.path("contrib/zlib"));
     lib.addIncludePath(assimp.path("contrib/openddlparser/include"));
 
+
+    lib.installConfigHeader(config_h, .{});
     lib.installHeadersDirectoryOptions(.{
         .source_dir = assimp.path("include"),
         .install_subdir = "",
