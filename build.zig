@@ -36,6 +36,7 @@ pub fn build(b: *std.Build) !void {
     lib.addIncludePath(assimp.path("contrib/zlib"));
     lib.addIncludePath(assimp.path("contrib/openddlparser/include"));
 
+    lib.defineCMacro("RAPIDJSON_HAS_STDSTRING", "1");
 
     lib.installConfigHeader(config_h, .{});
     lib.installHeadersDirectoryOptions(.{
@@ -137,10 +138,12 @@ const sources = struct {
         "code/CApi/CInterfaceIOWrapper.cpp",
         "code/Common/AssertHandler.cpp",
         "code/Common/Assimp.cpp",
+        "code/Common/Base64.cpp",
         "code/Common/BaseImporter.cpp",
         "code/Common/BaseProcess.cpp",
         "code/Common/Bitmap.cpp",
         "code/Common/CreateAnimMesh.cpp",
+        "code/Common/Compression.cpp",
         "code/Common/DefaultIOStream.cpp",
         "code/Common/IOSystem.cpp",
         "code/Common/DefaultIOSystem.cpp",
