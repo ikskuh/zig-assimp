@@ -103,19 +103,32 @@ pub fn build(b: *std.Build) !void {
 
     b.installArtifact(lib);
 
-    const example = b.addExecutable(.{
-        .name = "static-example",
+    const example_cpp = b.addExecutable(.{
+        .name = "static-example-cpp",
         .target = target,
         .optimize = optimize,
     });
-    example.addCSourceFile(.{
+    example_cpp.addCSourceFile(.{
         .file = .{ .path = "src/example.cpp" },
         .flags = &[_][]const u8{"-std=c++17"},
     });
-    example.linkLibrary(lib);
-    example.linkLibC();
-    example.linkLibCpp();
-    b.installArtifact(example);
+    example_cpp.linkLibrary(lib);
+    example_cpp.linkLibC();
+    example_cpp.linkLibCpp();
+    b.installArtifact(example_cpp);
+
+    const example_c = b.addExecutable(.{
+        .name = "static-example-c",
+        .target = target,
+        .optimize = optimize,
+    });
+    example_c.addCSourceFile(.{
+        .file = .{ .path = "src/example.c" },
+        .flags = &[_][]const u8{"-std=c99"},
+    });
+    example_c.linkLibrary(lib);
+    example_c.linkLibC();
+    b.installArtifact(example_c);
 }
 
 const sources = struct {
