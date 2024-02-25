@@ -4,6 +4,7 @@ pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     const formats = b.option([]const u8, "formats", "Comma separated list of enabled formats, for example: STL,3MF,Obj") orelse "";
+    const use_double_precision = b.option(bool, "double", "All data will be stored as double values") orelse false;
     const assimp = b.dependency("assimp", .{});
 
     const lib = b.addStaticLibrary(.{
@@ -15,8 +16,16 @@ pub fn build(b: *std.Build) !void {
     lib.linkLibC();
     lib.linkLibCpp();
 
-    lib.addIncludePath(.{ .path = "include" });
+    const config_h = b.addConfigHeader(
+        .{
+            .style = .{ .cmake = assimp.path("include/assimp/config.h.in") },
+            .include_path = "assimp/config.h",
+        },
+        .{ .ASSIMP_DOUBLE_PRECISION = use_double_precision },
+    );
+    lib.addConfigHeader(config_h);
     lib.addIncludePath(assimp.path("include"));
+    lib.addIncludePath(.{ .path = "include" });
 
     lib.addIncludePath(assimp.path(""));
     lib.addIncludePath(assimp.path("contrib"));
@@ -27,6 +36,9 @@ pub fn build(b: *std.Build) !void {
     lib.addIncludePath(assimp.path("contrib/zlib"));
     lib.addIncludePath(assimp.path("contrib/openddlparser/include"));
 
+    lib.defineCMacro("RAPIDJSON_HAS_STDSTRING", "1");
+
+    lib.installConfigHeader(config_h, .{});
     lib.installHeadersDirectoryOptions(.{
         .source_dir = assimp.path("include"),
         .install_subdir = "",
@@ -92,19 +104,32 @@ pub fn build(b: *std.Build) !void {
 
     b.installArtifact(lib);
 
-    const example = b.addExecutable(.{
-        .name = "static-example",
+    const example_cpp = b.addExecutable(.{
+        .name = "static-example-cpp",
         .target = target,
         .optimize = optimize,
     });
-    example.addCSourceFile(.{
+    example_cpp.addCSourceFile(.{
         .file = .{ .path = "src/example.cpp" },
         .flags = &[_][]const u8{"-std=c++17"},
     });
-    example.linkLibrary(lib);
-    example.linkLibC();
-    example.linkLibCpp();
-    b.installArtifact(example);
+    example_cpp.linkLibrary(lib);
+    example_cpp.linkLibC();
+    example_cpp.linkLibCpp();
+    b.installArtifact(example_cpp);
+
+    const example_c = b.addExecutable(.{
+        .name = "static-example-c",
+        .target = target,
+        .optimize = optimize,
+    });
+    example_c.addCSourceFile(.{
+        .file = .{ .path = "src/example.c" },
+        .flags = &[_][]const u8{"-std=c99"},
+    });
+    example_c.linkLibrary(lib);
+    example_c.linkLibC();
+    b.installArtifact(example_c);
 }
 
 const sources = struct {
@@ -113,10 +138,12 @@ const sources = struct {
         "code/CApi/CInterfaceIOWrapper.cpp",
         "code/Common/AssertHandler.cpp",
         "code/Common/Assimp.cpp",
+        "code/Common/Base64.cpp",
         "code/Common/BaseImporter.cpp",
         "code/Common/BaseProcess.cpp",
         "code/Common/Bitmap.cpp",
         "code/Common/CreateAnimMesh.cpp",
+        "code/Common/Compression.cpp",
         "code/Common/DefaultIOStream.cpp",
         "code/Common/IOSystem.cpp",
         "code/Common/DefaultIOSystem.cpp",
