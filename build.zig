@@ -3,7 +3,7 @@ const std = @import("std");
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
-    const formats = b.option([]const u8, "formats", "Comma separated list of enabled formats, for example: STL,3MF,Obj") orelse "";
+    const formats = b.option([]const u8, "formats", "Comma separated list of enabled formats or \"all\", for example: STL,3MF,Obj") orelse "";
     const use_double_precision = b.option(bool, "double", "All data will be stored as double values") orelse false;
     const assimp = b.dependency("assimp", .{});
 
@@ -65,21 +65,21 @@ pub fn build(b: *std.Build) !void {
         });
     }
 
+    var enable_all = false;
     var enabled_formats = std.BufSet.init(b.allocator);
     defer enabled_formats.deinit();
     var tokenizer = std.mem.tokenize(u8, formats, ",");
     while (tokenizer.next()) |format| {
+        if (std.mem.eql(u8, format, "all")) {
+            enable_all = true;
+            break;
+        }
+
         var found: bool = false;
         inline for (comptime std.meta.declarations(sources.formats)) |format_files| {
             if (std.mem.eql(u8, format_files.name, format)) {
-                lib.addCSourceFiles(.{
-                    .dependency = assimp,
-                    .files = &@field(sources.formats, format_files.name),
-                    .flags = &.{},
-                });
-
-                found = true;
                 try enabled_formats.insert(format);
+                found = true;
             }
         }
         if (!found) {
@@ -93,7 +93,15 @@ pub fn build(b: *std.Build) !void {
     }
 
     inline for (comptime std.meta.declarations(sources.formats)) |format_files| {
-        if (!enabled_formats.contains(format_files.name)) {
+        const enabled = enable_all or enabled_formats.contains(format_files.name);
+
+        if (enabled) {
+            lib.addCSourceFiles(.{
+                .dependency = assimp,
+                .files = &@field(sources.formats, format_files.name),
+                .flags = &.{},
+            });
+        } else {
             const define_importer = b.fmt("ASSIMP_BUILD_NO_{}_IMPORTER", .{fmtUpperCase(format_files.name)});
             const define_exporter = b.fmt("ASSIMP_BUILD_NO_{}_EXPORTER", .{fmtUpperCase(format_files.name)});
 
