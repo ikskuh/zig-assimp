@@ -504,6 +504,19 @@ const sources = struct {
         pub const X3D = [_][]const u8{
             "code/AssetLib/X3D/X3DExporter.cpp",
             "code/AssetLib/X3D/X3DImporter.cpp",
+            "code/AssetLib/X3D/X3DImporter.cpp",
+            "code/AssetLib/X3D/X3DImporter_Geometry2D.cpp",
+            "code/AssetLib/X3D/X3DImporter_Geometry3D.cpp",
+            "code/AssetLib/X3D/X3DImporter_Group.cpp",
+            "code/AssetLib/X3D/X3DImporter_Light.cpp",
+            "code/AssetLib/X3D/X3DImporter_Metadata.cpp",
+            "code/AssetLib/X3D/X3DImporter_Networking.cpp",
+            "code/AssetLib/X3D/X3DImporter_Postprocess.cpp",
+            "code/AssetLib/X3D/X3DImporter_Rendering.cpp",
+            "code/AssetLib/X3D/X3DImporter_Shape.cpp",
+            "code/AssetLib/X3D/X3DImporter_Texturing.cpp",
+            "code/AssetLib/X3D/X3DGeoHelper.cpp",
+            "code/AssetLib/X3D/X3DXmlHelper.cpp",
         };
         pub const XGL = [_][]const u8{
             "code/AssetLib/XGL/XGLLoader.cpp",
