@@ -411,7 +411,7 @@ const sources = struct {
             "code/AssetLib/Irr/IRRShared.cpp",
         };
         pub const IQM = [_][]const u8{
-            "AssetLib/IQM/IQMImporter.cpp",
+            "code/AssetLib/IQM/IQMImporter.cpp",
         };
         pub const LWO = [_][]const u8{
             "code/AssetLib/LWO/LWOAnimation.cpp",
