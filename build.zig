@@ -102,6 +102,14 @@ pub fn build(b: *std.Build) !void {
         }
     }
 
+    for (unsupported_formats) |unsupported_format| {
+        const define_importer = b.fmt("ASSIMP_BUILD_NO_{}_IMPORTER", .{fmtUpperCase(unsupported_format)});
+        const define_exporter = b.fmt("ASSIMP_BUILD_NO_{}_EXPORTER", .{fmtUpperCase(unsupported_format)});
+
+        lib.defineCMacro(define_importer, null);
+        lib.defineCMacro(define_exporter, null);
+    }
+
     b.installArtifact(lib);
 
     const example_cpp = b.addExecutable(.{
@@ -131,6 +139,10 @@ pub fn build(b: *std.Build) !void {
     example_c.linkLibC();
     b.installArtifact(example_c);
 }
+
+const unsupported_formats = [_][]const u8{
+    "C4D", // fails to build, MSVC only
+};
 
 const sources = struct {
     const common = [_][]const u8{
@@ -319,9 +331,9 @@ const sources = struct {
         pub const BVH = [_][]const u8{
             "code/AssetLib/BVH/BVHLoader.cpp",
         };
-        pub const C4D = [_][]const u8{
-            "code/AssetLib/C4D/C4DImporter.cpp",
-        };
+        // pub const C4D = [_][]const u8{
+        //     "code/AssetLib/C4D/C4DImporter.cpp",
+        // };
         pub const COB = [_][]const u8{
             "code/AssetLib/COB/COBLoader.cpp",
         };
