@@ -3,7 +3,7 @@ const std = @import("std");
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
-    const formats = b.option([]const u8, "formats", "Comma separated list of enabled formats, for example: STL,3MF,Obj") orelse "";
+    const formats = b.option([]const u8, "formats", "Comma separated list of enabled formats or \"all\", for example: STL,3MF,Obj") orelse "";
     const use_double_precision = b.option(bool, "double", "All data will be stored as double values") orelse false;
     const assimp = b.dependency("assimp", .{});
 
@@ -65,21 +65,21 @@ pub fn build(b: *std.Build) !void {
         });
     }
 
+    var enable_all = false;
     var enabled_formats = std.BufSet.init(b.allocator);
     defer enabled_formats.deinit();
     var tokenizer = std.mem.tokenize(u8, formats, ",");
     while (tokenizer.next()) |format| {
+        if (std.mem.eql(u8, format, "all")) {
+            enable_all = true;
+            break;
+        }
+
         var found: bool = false;
         inline for (comptime std.meta.declarations(sources.formats)) |format_files| {
             if (std.mem.eql(u8, format_files.name, format)) {
-                lib.addCSourceFiles(.{
-                    .dependency = assimp,
-                    .files = &@field(sources.formats, format_files.name),
-                    .flags = &.{},
-                });
-
-                found = true;
                 try enabled_formats.insert(format);
+                found = true;
             }
         }
         if (!found) {
@@ -93,13 +93,29 @@ pub fn build(b: *std.Build) !void {
     }
 
     inline for (comptime std.meta.declarations(sources.formats)) |format_files| {
-        if (!enabled_formats.contains(format_files.name)) {
+        const enabled = enable_all or enabled_formats.contains(format_files.name);
+
+        if (enabled) {
+            lib.addCSourceFiles(.{
+                .dependency = assimp,
+                .files = &@field(sources.formats, format_files.name),
+                .flags = &.{},
+            });
+        } else {
             const define_importer = b.fmt("ASSIMP_BUILD_NO_{}_IMPORTER", .{fmtUpperCase(format_files.name)});
             const define_exporter = b.fmt("ASSIMP_BUILD_NO_{}_EXPORTER", .{fmtUpperCase(format_files.name)});
 
             lib.defineCMacro(define_importer, null);
             lib.defineCMacro(define_exporter, null);
         }
+    }
+
+    for (unsupported_formats) |unsupported_format| {
+        const define_importer = b.fmt("ASSIMP_BUILD_NO_{}_IMPORTER", .{fmtUpperCase(unsupported_format)});
+        const define_exporter = b.fmt("ASSIMP_BUILD_NO_{}_EXPORTER", .{fmtUpperCase(unsupported_format)});
+
+        lib.defineCMacro(define_importer, null);
+        lib.defineCMacro(define_exporter, null);
     }
 
     b.installArtifact(lib);
@@ -131,6 +147,10 @@ pub fn build(b: *std.Build) !void {
     example_c.linkLibC();
     b.installArtifact(example_c);
 }
+
+const unsupported_formats = [_][]const u8{
+    "C4D", // fails to build, MSVC only
+};
 
 const sources = struct {
     const common = [_][]const u8{
@@ -319,9 +339,9 @@ const sources = struct {
         pub const BVH = [_][]const u8{
             "code/AssetLib/BVH/BVHLoader.cpp",
         };
-        pub const C4D = [_][]const u8{
-            "code/AssetLib/C4D/C4DImporter.cpp",
-        };
+        // pub const C4D = [_][]const u8{
+        //     "code/AssetLib/C4D/C4DImporter.cpp",
+        // };
         pub const COB = [_][]const u8{
             "code/AssetLib/COB/COBLoader.cpp",
         };
@@ -391,7 +411,7 @@ const sources = struct {
             "code/AssetLib/Irr/IRRShared.cpp",
         };
         pub const IQM = [_][]const u8{
-            "AssetLib/IQM/IQMImporter.cpp",
+            "code/AssetLib/IQM/IQMImporter.cpp",
         };
         pub const LWO = [_][]const u8{
             "code/AssetLib/LWO/LWOAnimation.cpp",
@@ -504,6 +524,19 @@ const sources = struct {
         pub const X3D = [_][]const u8{
             "code/AssetLib/X3D/X3DExporter.cpp",
             "code/AssetLib/X3D/X3DImporter.cpp",
+            "code/AssetLib/X3D/X3DImporter.cpp",
+            "code/AssetLib/X3D/X3DImporter_Geometry2D.cpp",
+            "code/AssetLib/X3D/X3DImporter_Geometry3D.cpp",
+            "code/AssetLib/X3D/X3DImporter_Group.cpp",
+            "code/AssetLib/X3D/X3DImporter_Light.cpp",
+            "code/AssetLib/X3D/X3DImporter_Metadata.cpp",
+            "code/AssetLib/X3D/X3DImporter_Networking.cpp",
+            "code/AssetLib/X3D/X3DImporter_Postprocess.cpp",
+            "code/AssetLib/X3D/X3DImporter_Rendering.cpp",
+            "code/AssetLib/X3D/X3DImporter_Shape.cpp",
+            "code/AssetLib/X3D/X3DImporter_Texturing.cpp",
+            "code/AssetLib/X3D/X3DGeoHelper.cpp",
+            "code/AssetLib/X3D/X3DXmlHelper.cpp",
         };
         pub const XGL = [_][]const u8{
             "code/AssetLib/XGL/XGLLoader.cpp",
