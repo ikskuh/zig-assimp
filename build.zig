@@ -17,6 +17,9 @@ pub fn build(b: *std.Build) !void {
     const use_double_precision = b.option(bool, "double", "All data will be stored as double values") orelse false;
     const assimp = b.dependency("assimp", .{});
 
+    const joined_target_str = try std.mem.concat(b.allocator, u8, &.{ @tagName(target.result.cpu.arch), "_", @tagName(target.result.os.tag), "_", @tagName(target.result.abi) });
+    defer b.allocator.free(joined_target_str);
+
     const lib = b.addStaticLibrary(.{
         .name = "assimp",
         .optimize = optimize,
@@ -27,6 +30,7 @@ pub fn build(b: *std.Build) !void {
         lib.defineCMacro("_WINDOWS", null);
         lib.defineCMacro("_WIN32", null);
         lib.defineCMacro("OPENDDL_STATIC_LIBARY", null);
+        lib.defineCMacro("ASSIMP_IMPORTER_GLTF_USE_OPEN3DGC", "1");
     }
 
     lib.linkLibC();
@@ -136,46 +140,29 @@ pub fn build(b: *std.Build) !void {
         lib.defineCMacro(define_exporter, null);
     }
 
-    b.installArtifact(lib);
+    const assimp_lib_path = try std.fs.path.join(b.allocator, &.{ joined_target_str, "assimp.lib" });
+    defer b.allocator.free(assimp_lib_path);
+    const libArtifact = b.addInstallLibFile(lib.getEmittedBin(), assimp_lib_path);
+    libArtifact.step.dependOn(&lib.step);
+    b.getInstallStep().dependOn(&libArtifact.step);
 
-    const example_cpp = b.addExecutable(.{
-        .name = "static-example-cpp",
-        .target = target,
-        .optimize = optimize,
-    });
-    example_cpp.addCSourceFiles(.{
-        .files = &[_][]const u8{"src/example.cpp"},
-        .flags = &[_][]const u8{"-std=c++17"},
-    });
-    example_cpp.linkLibrary(lib);
-    example_cpp.linkLibC();
-    if (target.result.abi != .msvc) {
-        example_cpp.linkLibCpp();
+    if (lib.producesPdbFile()) {
+        const assimp_pdb_path = try std.fs.path.join(b.allocator, &.{ joined_target_str, "assimp.pdb" });
+        defer b.allocator.free(assimp_pdb_path);
+        const pdbArtifact = b.addInstallLibFile(lib.getEmittedPdb(), assimp_pdb_path);
+        pdbArtifact.step.dependOn(&lib.step);
+        b.getInstallStep().dependOn(&pdbArtifact.step);
     }
-    example_cpp.addIncludePath(assimp.path("include"));
-    if (target.result.os.tag == .windows) {
-        example_cpp.defineCMacro("_WINDOWS", null);
-        example_cpp.defineCMacro("_WIN32", null);
-    }
-    b.installArtifact(example_cpp);
 
-    const example_c = b.addExecutable(.{
-        .name = "static-example-c",
-        .target = target,
-        .optimize = optimize,
-    });
-    example_c.addCSourceFiles(.{
-        .files = &[_][]const u8{"src/example.c"},
-        .flags = &[_][]const u8{"-std=c99"},
-    });
-    example_c.linkLibrary(lib);
-    example_c.linkLibC();
-    example_c.addIncludePath(assimp.path("include"));
-    if (target.result.os.tag == .windows) {
-        example_c.defineCMacro("_WINDOWS", null);
-        example_c.defineCMacro("_WIN32", null);
-    }
-    b.installArtifact(example_c);
+    const zig_assimp_license_target = try std.fs.path.join(b.allocator, &.{ joined_target_str, "ZIG_ASSIMP_LICENSE" });
+    defer b.allocator.free(zig_assimp_license_target);
+    b.installLibFile("LICENCE", zig_assimp_license_target);
+
+    const assimp_license_target = try std.fs.path.join(b.allocator, &.{ joined_target_str, "ASSIMP_LICENSE" });
+    defer b.allocator.free(assimp_license_target);
+    const addLicense = b.addInstallLibFile(assimp.path("LICENSE"), assimp_license_target);
+    addLicense.step.dependOn(&lib.step);
+    b.getInstallStep().dependOn(&addLicense.step);
 }
 
 const unsupported_formats = [_][]const u8{
