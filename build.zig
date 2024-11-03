@@ -1,4 +1,14 @@
 const std = @import("std");
+const builtin = @import("builtin");
+
+const zig_version = builtin.zig_version;
+fn lazy_from_path(path_chars: []const u8, owner: *std.Build) std.Build.LazyPath {
+    if (zig_version.major > 0 or zig_version.minor >= 13) {
+        return std.Build.LazyPath{ .src_path = .{ .sub_path = path_chars, .owner = owner } };
+    } else if (zig_version.minor >= 12) {
+        return std.Build.LazyPath{ .path = path_chars };
+    } else unreachable;
+}
 
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
@@ -13,8 +23,16 @@ pub fn build(b: *std.Build) !void {
         .target = target,
     });
 
+    if (target.result.os.tag == .windows) {
+        lib.defineCMacro("_WINDOWS", null);
+        lib.defineCMacro("_WIN32", null);
+        lib.defineCMacro("OPENDDL_STATIC_LIBARY", null);
+    }
+
     lib.linkLibC();
-    lib.linkLibCpp();
+    if (target.result.abi != .msvc) {
+        lib.linkLibCpp();
+    }
 
     const config_h = b.addConfigHeader(
         .{
@@ -25,7 +43,7 @@ pub fn build(b: *std.Build) !void {
     );
     lib.addConfigHeader(config_h);
     lib.addIncludePath(assimp.path("include"));
-    lib.addIncludePath(.{ .path = "include" });
+    lib.addIncludePath(lazy_from_path("include", b));
 
     lib.addIncludePath(assimp.path(""));
     lib.addIncludePath(assimp.path("contrib"));
@@ -38,28 +56,28 @@ pub fn build(b: *std.Build) !void {
 
     lib.defineCMacro("RAPIDJSON_HAS_STDSTRING", "1");
 
-    lib.installConfigHeader(config_h, .{});
-    lib.installHeadersDirectoryOptions(.{
-        .source_dir = assimp.path("include"),
-        .install_subdir = "",
-        .install_dir = .header,
-    });
+    lib.installConfigHeader(config_h);
+    lib.installHeadersDirectory(
+        assimp.path("include"),
+        "",
+        .{ .include_extensions = &.{ ".h", ".inl", ".hpp" } },
+    );
 
-    lib.installHeadersDirectoryOptions(.{
-        .source_dir = .{ .path = "include" },
-        .install_subdir = "",
-        .install_dir = .header,
-    });
+    lib.installHeadersDirectory(
+        lazy_from_path("include", b),
+        "",
+        .{ .include_extensions = &.{ ".h", ".inl", ".hpp" } },
+    );
 
     lib.addCSourceFiles(.{
-        .dependency = assimp,
+        .root = assimp.path(""),
         .files = &sources.common,
         .flags = &.{},
     });
 
     inline for (comptime std.meta.declarations(sources.libraries)) |ext_lib| {
         lib.addCSourceFiles(.{
-            .dependency = assimp,
+            .root = assimp.path(""),
             .files = &@field(sources.libraries, ext_lib.name),
             .flags = &.{},
         });
@@ -97,7 +115,7 @@ pub fn build(b: *std.Build) !void {
 
         if (enabled) {
             lib.addCSourceFiles(.{
-                .dependency = assimp,
+                .root = assimp.path(""),
                 .files = &@field(sources.formats, format_files.name),
                 .flags = &.{},
             });
@@ -125,13 +143,20 @@ pub fn build(b: *std.Build) !void {
         .target = target,
         .optimize = optimize,
     });
-    example_cpp.addCSourceFile(.{
-        .file = .{ .path = "src/example.cpp" },
+    example_cpp.addCSourceFiles(.{
+        .files = &[_][]const u8{"src/example.cpp"},
         .flags = &[_][]const u8{"-std=c++17"},
     });
     example_cpp.linkLibrary(lib);
     example_cpp.linkLibC();
-    example_cpp.linkLibCpp();
+    if (target.result.abi != .msvc) {
+        example_cpp.linkLibCpp();
+    }
+    example_cpp.addIncludePath(assimp.path("include"));
+    if (target.result.os.tag == .windows) {
+        example_cpp.defineCMacro("_WINDOWS", null);
+        example_cpp.defineCMacro("_WIN32", null);
+    }
     b.installArtifact(example_cpp);
 
     const example_c = b.addExecutable(.{
@@ -139,12 +164,17 @@ pub fn build(b: *std.Build) !void {
         .target = target,
         .optimize = optimize,
     });
-    example_c.addCSourceFile(.{
-        .file = .{ .path = "src/example.c" },
+    example_c.addCSourceFiles(.{
+        .files = &[_][]const u8{"src/example.c"},
         .flags = &[_][]const u8{"-std=c99"},
     });
     example_c.linkLibrary(lib);
     example_c.linkLibC();
+    example_c.addIncludePath(assimp.path("include"));
+    if (target.result.os.tag == .windows) {
+        example_c.defineCMacro("_WINDOWS", null);
+        example_c.defineCMacro("_WIN32", null);
+    }
     b.installArtifact(example_c);
 }
 
